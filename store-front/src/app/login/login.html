@@ -1,7 +1,11 @@
 <div class="login-container" style="max-width: 400px; margin: 50px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
   <h2>Sign In</h2>
 
-  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+  <div *ngIf="errorMessage" style="color: red; margin-bottom: 15px; text-align: center; font-weight: bold;">
+    {{ errorMessage }}
+  </div>
+
+  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" *ngIf="!showMFA">
 
     <div style="margin-bottom: 15px;">
       <label>Gmail Address:</label>
@@ -17,14 +21,33 @@
              placeholder="Enter password">
     </div>
 
-    <p *ngIf="errorMessage" style="color: red;">{{ errorMessage }}</p>
-
     <button type="submit" 
             style="width: 100%; padding: 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
-      Login
+      Next
     </button>
 
   </form>
+
+  <div *ngIf="showMFA" style="background: #e9f5ff; padding: 15px; border-radius: 5px; border: 1px solid #b8daff;">
+    <h3 style="margin-top: 0; color: #004085; font-size: 1.1em;">Security Check</h3>
+    <p style="margin-bottom: 15px; font-size: 0.9em; color: #555;">
+      Please answer your security question to continue.
+    </p>
+
+    <form [formGroup]="mfaForm" (ngSubmit)="onMfaSubmit()">
+      <div style="margin-bottom: 15px;">
+        <label style="font-weight: bold;">Security Answer:</label>
+        <input type="text" formControlName="securityAnswer" 
+               style="width: 100%; padding: 8px; margin-top: 5px;"
+               placeholder="e.g. Blue">
+      </div>
+
+      <button type="submit" 
+              style="width: 100%; padding: 10px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        Verify Identity
+      </button>
+    </form>
+  </div>
 
   <p style="margin-top: 15px; text-align: center;">
     Don't have an account? <a routerLink="/register" style="color: #007bff; cursor: pointer;">Sign up</a>
