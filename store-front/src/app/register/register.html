@@ -8,6 +8,8 @@
     <label>Password:</label>
     <input type="password" formControlName="password" placeholder="Create a password">
 
+    <label>Security Question: What is your favorite color?</label>
+    <input type="text" formControlName="securityAnswer" placeholder="e.g. Blue" style="width: 100%; padding: 8px; margin-bottom: 10px;">
     <p *ngIf="errorMessage" style="color: red;">{{ errorMessage }}</p>
 
     <button type="submit" [disabled]="registerForm.invalid">Sign Up</button>

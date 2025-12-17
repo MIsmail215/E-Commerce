@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core'; // <--- 1. Import this
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -12,10 +12,10 @@ import { Router } from '@angular/router';
 export class CartComponent implements OnInit {
   cartItems: any[] = [];
   totalPrice: number = 0;
-  
+   
   private http = inject(HttpClient);
   private router = inject(Router);
-  private cdr = inject(ChangeDetectorRef); // <--- 2. Inject it here
+  private cdr = inject(ChangeDetectorRef);
 
   ngOnInit() {
     const email = localStorage.getItem('currentUser');
@@ -38,7 +38,7 @@ export class CartComponent implements OnInit {
           this.calculateTotal();
 
           // 3. FORCE UPDATE THE SCREEN
-          this.cdr.detectChanges(); // <--- 3. The Magic Fix!
+          this.cdr.detectChanges();
         },
         error: (err) => console.error('Error loading cart:', err)
       });
@@ -54,8 +54,37 @@ export class CartComponent implements OnInit {
   goBack() {
     this.router.navigate(['/store']);
   }
-  
+   
+  // --- UPDATED CHECKOUT FUNCTION ---
   checkout() {
-    alert('Feature coming soon: Payment Gateway!');
+    const email = localStorage.getItem('currentUser');
+    
+    if (!email) {
+      alert('Error: You must be logged in to checkout.');
+      return;
+    }
+
+    if (confirm(`Total is $${this.totalPrice}. Confirm purchase?`)) {
+      
+      // Call the backend to clear the cart
+      this.http.post('http://192.168.10.20:3000/cart/checkout', { email: email })
+        .subscribe({
+          next: (res) => {
+            console.log('Checkout success:', res);
+            alert('Order placed successfully! Thank you for shopping.');
+            
+            // 1. Clear local data
+            this.cartItems = [];
+            this.totalPrice = 0;
+            
+            // 2. Redirect to Store
+            this.router.navigate(['/store']);
+          },
+          error: (err) => {
+            console.error('Checkout error:', err);
+            alert('Failed to place order. Please try again.');
+          }
+        });
+    }
   }
 }
