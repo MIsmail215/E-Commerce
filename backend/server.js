@@ -24,24 +24,25 @@ mongoose.connect('mongodb://192.168.10.30:27017/techvault')
 
 // Cart Model
 const CartSchema = new mongoose.Schema({
-    email: { type: String, required: true }, // Updated to use email
+    email: { type: String, required: true }, 
     products: [{ productId: String, name: String, price: Number, quantity: { type: Number, default: 1 } }]
 });
 const Cart = mongoose.model('Cart', CartSchema);
 
-// --- REGISTER ROUTE ---
+// --- UPDATED REGISTER ROUTE (Now saves Security Answer) ---
 app.post('/register', async (req, res) => {
     try {
-        const { email, password } = req.body;
-        console.log(`Attempting to register: ${email}`); // Debug Log
+        const { email, password, securityAnswer } = req.body;
+        console.log(`Attempting to register: ${email}`); 
 
-        if (!email || !password) return res.status(400).json({ error: "Missing email or password" });
+        if (!email || !password || !securityAnswer) {
+            return res.status(400).json({ error: "Missing email, password, or security answer" });
+        }
 
-        // Create user using the new 'email' field
-        const newUser = new User({ email, password });
+        const newUser = new User({ email, password, securityAnswer });
         await newUser.save();
 
-        console.log("User saved successfully!");
+        console.log("User saved successfully with MFA setup!");
         res.status(201).json({ message: 'User registered successfully!' });
     } catch (err) {
         console.error("!!! REGISTRATION ERROR !!!", err);
@@ -49,19 +50,37 @@ app.post('/register', async (req, res) => {
     }
 });
 
-// --- LOGIN ROUTE ---
+// --- UPDATED LOGIN ROUTE (Adds MFA Checks) ---
 app.post('/login', async (req, res) => {
     try {
-        const { email, password } = req.body;
-        // Find user by EMAIL now
+        const { email, password, securityAnswer } = req.body;
         const user = await User.findOne({ email }); 
 
-        if (user && user.password === password) {
-            res.status(200).json({ message: 'Login Successful', email: user.email });
-        } else {
-            res.status(401).json({ message: 'Invalid Credentials' });
+        // 1. Basic Credential Check
+        if (!user || user.password !== password) {
+            return res.status(401).json({ message: 'Invalid Credentials' });
         }
+
+        // 2. MFA: If no answer provided yet, tell Frontend to ask for it
+        if (!securityAnswer) {
+            return res.status(200).json({ 
+                message: 'MFA Required', 
+                mfaRequired: true 
+            });
+        }
+
+        // 3. MFA: Verify the answer (Case-insensitive)
+        if (user.securityAnswer && user.securityAnswer.toLowerCase() === securityAnswer.toLowerCase()) {
+            return res.status(200).json({ 
+                message: 'Login Successful', 
+                email: user.email 
+            });
+        } else {
+            return res.status(401).json({ message: 'Invalid Security Answer' });
+        }
+
     } catch (err) {
+        console.error(err);
         res.status(500).json({ error: 'Server Error' });
     }
 });
@@ -77,7 +96,7 @@ app.get('/products', async (req, res) => {
 });
 
 app.post('/cart/add', async (req, res) => {
-    const { username, product } = req.body; // Frontend still sends 'username' key for now
+    const { username, product } = req.body; 
     const userEmail = username; 
 
     try {
@@ -102,6 +121,24 @@ app.get('/cart/:email', async (req, res) => {
         res.json(cart || { products: [] });
     } catch (err) {
         res.status(500).json({ error: "Failed to fetch cart" });
+    }
+});
+
+app.post('/cart/checkout', async (req, res) => {
+    const { email } = req.body;
+    console.log(`[Checkout] Processing order for: ${email}`);
+
+    try {
+        await Cart.updateOne(
+            { email: email },
+            { $set: { products: [] } } 
+        );
+
+        console.log(`[Checkout] Cart cleared for ${email}`);
+        res.json({ message: "Order placed successfully!" });
+    } catch (err) {
+        console.error("Checkout Error:", err);
+        res.status(500).json({ error: "Failed to place order" });
     }
 });
 
