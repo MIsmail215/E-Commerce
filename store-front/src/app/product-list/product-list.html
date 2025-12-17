@@ -1,0 +1,40 @@
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: #f8f9fa; border-bottom: 1px solid #ddd; margin-bottom: 20px;">
+  <h2 style="margin: 0;">TechVault Store</h2>
+  
+  <div>
+    <span style="margin-right: 15px; font-weight: bold;">Welcome!</span>
+    
+    <button (click)="goToCart()" 
+            style="background-color: #ffc107; color: black; border: none; padding: 8px 16px; margin-right: 10px; border-radius: 4px; cursor: pointer;">
+      View Cart
+    </button>
+
+    <button (click)="logout()" 
+            style="background-color: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+      Logout
+    </button>
+  </div>
+</div>
+
+<div class="product-container" style="display: flex; flex-wrap: wrap; gap: 20px; padding: 20px;">
+  
+  <div *ngFor="let product of products" class="product-card" 
+       style="border: 1px solid #ddd; padding: 15px; border-radius: 8px; width: 250px;">
+    
+    <h3>{{ product.name }}</h3>
+    <p style="color: #666; font-size: 0.9em;">{{ product.category }}</p>
+    <p>{{ product.description }}</p>
+    <p style="font-weight: bold; font-size: 1.2em;">${{ product.price }}</p>
+    
+    <button (click)="addToCart(product)" 
+            style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+      Add to Cart
+    </button>
+  
+  </div>
+
+  <div *ngIf="products.length === 0" style="padding: 20px;">
+    <p>Loading products...</p>
+  </div>
+
+</div>
